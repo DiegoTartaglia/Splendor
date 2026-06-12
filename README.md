@@ -1,80 +1,116 @@
-# Splendor Web Application
+# 💎 Splendor
 
-A digital version of the board game Splendor, built with React + Vite. It runs
-as a web app, as a native Android app (via Capacitor) and as a macOS desktop
-app (via Electron). You play against CPU opponents driven by a heuristic AI.
+Versione digitale del gioco da tavolo **Splendor**, giocabile contro avversari
+CPU. Un'unica base di codice React che gira come **app web**, **app Android**
+(Capacitor) e **app desktop macOS** (Electron).
 
-## Project Structure
+<p align="center">
+  <img src="docs/screenshot-android.png" alt="Splendor su Android" width="280">
+</p>
 
-```
-splendor-web-app
-├── src
-│   ├── components
-│   │   ├── Menu.jsx          # Start screen (players / CPU count)
-│   │   ├── Game.jsx          # Game screen: turns, gem selection, AI loop
-│   │   ├── Board.jsx         # Players side panel
-│   │   ├── Player.jsx        # Single player summary card
-│   │   ├── Cards.jsx         # Nobles, development cards, reserved cards
-│   │   └── GemToken.jsx      # Reusable gem token chip
-│   ├── services
-│   │   ├── gameLogic.js      # Game state, rules, costs, nobles, token limit
-│   │   └── aiLogic.js        # CPU strategy (buy / reserve / collect gems)
-│   ├── types/game.js         # Shared constants
-│   ├── App.jsx
-│   ├── index.jsx
-│   └── index.css             # Theme and responsive layout
-├── electron/main.cjs         # Electron entry point (macOS desktop app)
-├── android/                  # Capacitor Android project
-├── scripts/simulate.js       # AI-vs-AI smoke test
-├── capacitor.config.json
-├── vite.config.js
-└── index.html
-```
+## ✨ Caratteristiche
 
-## Development
+- 🎮 **2–4 giocatori**, con qualsiasi combinazione di umani e CPU
+- 🤖 **IA euristica**: compra valutando punti, nobili e sconti permanenti,
+  riserva le carte per negarle agli avversari, raccoglie le gemme puntando a
+  una carta obiettivo e scarta i gettoni inutili quando ha la mano piena
+- 🃏 **Regole fedeli al gioco da tavolo**: limite di 10 gettoni, oro jolly solo
+  riservando una carta, 2 gemme uguali solo se in banca ce ne sono 4+, nobili
+  che arrivano da soli quando hai i bonus richiesti
+- 📱 **Layout responsive**: interfaccia pensata sia per desktop che per
+  schermi da telefono
+- 🌍 **Tre piattaforme, una codebase**: web, Android e macOS
+
+## 🕹️ Come si gioca
+
+Ogni turno scegli **una** azione:
+
+1. **Prendi gemme** — 3 di colori diversi, oppure 2 uguali (se in banca ce ne
+   sono almeno 4). Massimo 10 gettoni in mano.
+2. **Compra una carta** — paghi con gemme e oro; i bonus delle carte già
+   acquistate fanno da sconto permanente. Le carte danno punti prestigio.
+3. **Riserva una carta** (max 3) — la metti da parte per dopo e ricevi un
+   gettone d'oro, che vale come jolly.
+
+I **nobili** ti fanno visita (3 punti) quando raggiungi i bonus richiesti.
+Vince chi arriva per primo a **15 punti prestigio**.
+
+## 🚀 Avvio rapido
 
 ```bash
 npm install
-npm run dev        # dev server at http://localhost:5173
-npm run build      # production build in dist/
+npm run dev        # app web su http://localhost:5173
 ```
 
-## macOS desktop app (Electron)
+## 🖥️ App macOS (Electron)
 
 ```bash
-npm run electron   # build and launch the desktop app
-npm run dist:mac   # package a .dmg/.zip into release/
+npm run electron   # compila e avvia l'app desktop
+npm run dist:mac   # crea .dmg e .zip in release/
 ```
 
-## Android app (Capacitor)
+La build non è firmata: la prima volta apri l'app con tasto destro → Apri.
 
-Requires Android Studio (with the Android SDK) installed.
+## 📱 App Android (Capacitor)
+
+Richiede Android Studio con l'SDK installato.
 
 ```bash
-npm run android:open   # build, sync and open the project in Android Studio
+npm run android:open   # compila, sincronizza e apre il progetto in Android Studio
 ```
 
-From Android Studio you can run on an emulator/device or build an APK
-(Build > Build Bundle(s) / APK(s)). To only refresh web assets:
+Da Android Studio: ▶ Run per emulatore/dispositivo, oppure
+*Build → Build Bundle(s) / APK(s)* per generare l'APK.
+Per aggiornare solo gli asset web: `npm run android:sync`.
 
-```bash
-npm run android:sync
+## 🏗️ Architettura
+
+```
+src/
+├── components/        # interfaccia React
+│   ├── Menu.jsx       # schermata iniziale (giocatori / CPU)
+│   ├── Game.jsx       # partita: turni, selezione gemme, ciclo IA
+│   ├── Board.jsx      # pannello giocatori
+│   ├── Player.jsx     # riepilogo del singolo giocatore
+│   ├── Cards.jsx      # nobili, carte sviluppo, carte riservate
+│   └── GemToken.jsx   # gettone-gemma riutilizzabile
+├── services/
+│   ├── gameLogic.js   # stato e regole: costi, acquisti, nobili, limiti
+│   └── aiLogic.js     # strategia CPU (compra / riserva / raccogli)
+└── types/game.js      # costanti condivise
+
+electron/main.cjs      # entry point app macOS
+android/               # progetto Android generato da Capacitor
+scripts/simulate.js    # test IA-contro-IA
 ```
 
-## AI smoke test
+La logica di gioco è **pura e senza dipendenze dalla UI**: ogni azione riceve
+lo stato e ne restituisce una copia aggiornata. È lo stesso motore usato dai
+componenti React, dall'IA e dal test di simulazione.
 
-Plays full AI-vs-AI games and checks that they terminate without violating
-token rules:
+## 🧠 Come ragiona l'IA
+
+A ogni turno, in ordine di priorità:
+
+1. **Compra** la migliore carta acquistabile (dal tavolo o tra le riservate),
+   pesando punti prestigio, avanzamento verso i nobili e sconto del bonus.
+2. **Riserva** una carta da 3+ punti che un avversario potrebbe comprare al
+   turno successivo (mossa di disturbo).
+3. **Raccoglie gemme** mirando alla carta obiettivo più conveniente e
+   raggiungibile; se ha la mano piena scambia i gettoni inutili.
+4. Se è completamente bloccata, restituisce gettoni alla banca per non
+   paralizzare l'economia di gioco.
+
+La stabilità è verificata con partite IA-contro-IA complete:
 
 ```bash
 npx esbuild scripts/simulate.js --bundle --format=cjs --outfile=/tmp/splendor-sim.cjs && node /tmp/splendor-sim.cjs
 ```
 
-## Game rules implemented
+## 🛠️ Stack
 
-- Take up to 3 gems of different colors, or 2 of one color when 4+ are
-  available; 10-token hand limit.
-- Buy cards with gems + gold jokers; card bonuses give permanent discounts.
-- Reserve up to 3 cards (grants a gold token); buy them later.
-- Nobles visit automatically when their bonus requirements are met (3 pts).
-- First player to reach 15 prestige points wins.
+React 17 · Vite 6 · Capacitor 6 · Electron 33
+
+## 📄 Licenza
+
+MIT
