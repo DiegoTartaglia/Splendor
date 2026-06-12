@@ -1,0 +1,8 @@
+{
+  "appId": "com.diegotartaglia.splendor",
+  "appName": "Splendor",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#14201d"
+  }
+}
